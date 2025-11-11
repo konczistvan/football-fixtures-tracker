@@ -13,10 +13,13 @@
 <body>
   <header class="app-header">
     <div class="container">
-      <div class="header-brand">
-        <img class="pl-logo" src="https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg" alt="Premier League" />
-        <h1>Premier League</h1>
-        <img class="flag" src="https://upload.wikimedia.org/wikipedia/commons/b/be/Flag_of_England.svg" alt="England" />
+      <div class="header-row">
+        <div class="header-brand">
+          <img class="pl-logo" src="https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg" alt="Premier League" />
+          <h1>Premier League</h1>
+          <img class="flag" src="https://upload.wikimedia.org/wikipedia/commons/b/be/Flag_of_England.svg" alt="England" />
+        </div>
+        <div class="header-note">Results, fixtures and stats</div>
       </div>
       <div class="season-progress">
         <div class="bar"><span id="season-fill"></span></div>
@@ -25,7 +28,6 @@
           <span id="season-end"></span>
         </div>
       </div>
-      <p class="subtitle">Fixtures, results and standings</p>
     </div>
   </header>
 
@@ -63,7 +65,7 @@
       <div class="card card--compact">
         <h2>Player Stats</h2>
         <div class="tabs">
-          <button class="tab active" data-tab="scorers">Scorers</button>
+          <button class="tab active" data-tab="scorers">Top scorers</button>
           <button class="tab" data-tab="assists">Assists</button>
           <button class="tab" data-tab="cleansheets">Clean Sheets</button>
         </div>
