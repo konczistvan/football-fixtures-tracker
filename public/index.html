@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Premier League</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="modern.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="container">
+      <div class="header-brand">
+        <img class="pl-logo" src="https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg" alt="Premier League" />
+        <h1>Premier League</h1>
+        <img class="flag" src="https://upload.wikimedia.org/wikipedia/commons/b/be/Flag_of_England.svg" alt="England" />
+      </div>
+      <div class="season-progress">
+        <div class="bar"><span id="season-fill"></span></div>
+        <div class="labels">
+          <span id="season-start"></span>
+          <span id="season-end"></span>
+        </div>
+      </div>
+      <p class="subtitle">Fixtures, results and standings</p>
+    </div>
+  </header>
+
+  <main class="container">
+  <div class="grid">
+    <div class="card card--compact">
+      <h2>League standings (2025/26)</h2>
+      <div class="table-scroll">
+      <table id="standings">
+        <thead>
+          <tr>
+            <th>#</th><th>Team</th><th>M</th><th>W</th><th>D</th>
+            <th>L</th><th>SG</th><th>CG</th><th>GD</th><th>Pt</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      </div>
+      <div id="standings-empty" class="muted" hidden>No information.</div>
+    </div>
+
+    <div class="card card--compact">
+      <h2>Fixtures Calendar</h2>
+      <div class="controls">
+        <button id="prev-day" class="icon-btn" title="Previous day" aria-label="Previous day"><svg class="icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
+        <input type="date" id="fixture-date" />
+        <button id="next-day" class="icon-btn" title="Next day" aria-label="Next day"><svg class="icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8.59 16.59 10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg></button>
+        <button id="today" title="Today">Today</button>
+      </div>
+      <div id="calendar-fixtures" class="compact-list"></div>
+      <div id="calendar-empty" class="muted" hidden>No fixtures on this date.</div>
+
+    </div>
+
+      <div class="card card--compact">
+        <h2>Player Stats</h2>
+        <div class="tabs">
+          <button class="tab active" data-tab="scorers">Scorers</button>
+          <button class="tab" data-tab="assists">Assists</button>
+          <button class="tab" data-tab="cleansheets">Clean Sheets</button>
+        </div>
+        <div id="leaders-list" class="leaders"></div>
+        <div id="leaders-empty" class="muted" hidden>No data available.</div>
+      </div>
+  </div>
+  </main>
+
+  <!-- Team modal -->
+  <div id="team-modal" class="modal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="team-title">
+      <div class="modal-header">
+        <div class="head">
+          <img id="team-crest" class="crest crest-lg" alt="" />
+          <div>
+            <h3 id="team-title">Team</h3>
+            <div id="team-sub" class="muted"></div>
+          </div>
+        </div>
+        <button id="team-close" class="close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-content">
+        <div class="modal-col">
+          <h4>Squad</h4>
+          <div id="team-squad" class="squad-list"></div>
+        </div>
+        <div class="modal-col">
+          <h4>Latest Results</h4>
+          <div id="team-last" class="compact-list"></div>
+          <h4 style="margin-top:12px;">Next Fixtures</h4>
+          <div id="team-next" class="compact-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="app.js" defer></script>
+</body>
+</html>
+
+
+
+
+
+

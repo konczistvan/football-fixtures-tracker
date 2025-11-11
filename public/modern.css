@@ -1,0 +1,20 @@
+:root {
+  --panel-max: calc(100vh - var(--header-h) - 170px);
+  --scrollbar-size: 8px;
+  --scrollbar-track: rgba(255,255,255,0.07);
+  --scrollbar-thumb: #5b9dff99;       /* accent w/ alpha */
+  --scrollbar-thumb-hover: #5b9dffff; /* solid accent */
+}
+
+/* Modern scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+::-webkit-scrollbar { width: var(--scrollbar-size); height: var(--scrollbar-size); }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-button { width: 0; height: 0; display: none; }
+
+/* Ensure stable layout when scrollbars appear */
+.table-scroll, .compact-list, .leaders { scrollbar-gutter: stable both-edges; }
+
