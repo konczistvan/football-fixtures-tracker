@@ -31,14 +31,28 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
         },
       });
     }
-    let r = await fetchFPL(FPL_URL);
-    if (r.status === 403) {
-      // fallback via simple proxy if upstream blocks our host
-      const alt = `https://cors.isomorphic-git.org/${FPL_URL}`;
-      try { r = await fetch(alt); } catch (_) {}
+
+    // Try direct + two proxy fallbacks
+    const candidates = [
+      FPL_URL,
+      'https://fantasy.premierleague.com/api/bootstrap-static/',
+      'https://cors.isomorphic-git.org/https://fantasy.premierleague.com/api/bootstrap-static/',
+      'https://r.jina.ai/http://fantasy.premierleague.com/api/bootstrap-static/'
+    ];
+    let data = null, lastStatus = null;
+    for (const u of candidates) {
+      try {
+        const resp = u.startsWith('https://cors.isomorphic-git.org/') || u.startsWith('https://r.jina.ai/')
+          ? await fetch(u)
+          : await fetchFPL(u);
+        lastStatus = resp.status;
+        if (!resp.ok) continue;
+        const text = await resp.text();
+        try { data = JSON.parse(text); } catch (_) { continue; }
+        if (data && data.elements) break;
+      } catch (e) { /* try next */ }
     }
-    if (!r || !r.ok) return res.status(502).json({ error: 'Upstream error', status: r && r.status });
-    const data = await r.json();
+    if (!data) return res.status(502).json({ error: 'Upstream error', status: lastStatus || 'all_failed' });
     const teams = new Map((data.teams || []).map(t => [t.id, t.name]));
     const players = data.elements || [];
 
