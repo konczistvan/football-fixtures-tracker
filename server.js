@@ -14,6 +14,8 @@ const UPSTREAM = "https://api.football-data.org/v4";
 // Provides: /api/pl-stats/:kind where kind in {scorers, assists, cleansheets}
 // Use a browser-like UA to avoid upstream 403 on some hosts
 const FPL_URL = process.env.FPL_URL || 'https://fantasy.premierleague.com/api/bootstrap-static/';
+// Simple in-memory cache to speed up repeated requests across tabs.
+let FPL_CACHE = { data: null, expires: 0, source: '' };
 app.get('/api/pl-stats/:kind', async (req, res) => {
   try {
     const kind = String(req.params.kind || '').toLowerCase();
@@ -31,43 +33,51 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
         },
       });
     }
-
-    // Try direct + multiple proxy fallbacks
-    const allOrigins = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
-    const candidates = [
-      FPL_URL,
-      'https://fantasy.premierleague.com/api/bootstrap-static/',
-      'https://cors.isomorphic-git.org/https://fantasy.premierleague.com/api/bootstrap-static/',
-      allOrigins,
-      'https://r.jina.ai/http://fantasy.premierleague.com/api/bootstrap-static/'
-    ];
-    let data = null, lastStatus = null, used = null, lastText = '';
-    for (const u of candidates) {
-      try {
-        const resp = (u.startsWith('https://cors.isomorphic-git.org/') || u.startsWith('https://r.jina.ai/') || u.startsWith('https://api.allorigins.win/'))
-          ? await fetch(u)
-          : await fetchFPL(u);
-        lastStatus = resp.status;
-        if (!resp.ok) continue;
-        const text = await resp.text();
-        lastText = text;
-        let parsed = null;
-        try { parsed = JSON.parse(text); } catch (_) { parsed = null; }
-        if (!parsed) {
-          const m = text.match(/\{[\s\S]*\}/);
-          if (m) {
-            try { parsed = JSON.parse(m[0]); } catch (_) { parsed = null; }
+    // Use cache unless refresh requested
+    const wantRefresh = 'refresh' in (req.query || {});
+    let data = null, used = FPL_CACHE.source, lastStatus = null, lastText = '';
+    if (!wantRefresh && FPL_CACHE.data && Date.now() < FPL_CACHE.expires) {
+      data = FPL_CACHE.data;
+    } else {
+      // Try direct + multiple proxy fallbacks
+      const allOrigins = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://fantasy.premierleague.com/api/bootstrap-static/');
+      const candidates = [
+        FPL_URL,
+        'https://fantasy.premierleague.com/api/bootstrap-static/',
+        'https://cors.isomorphic-git.org/https://fantasy.premierleague.com/api/bootstrap-static/',
+        allOrigins,
+        'https://r.jina.ai/http://fantasy.premierleague.com/api/bootstrap-static/'
+      ];
+      for (const u of candidates) {
+        try {
+          const resp = (u.startsWith('https://cors.isomorphic-git.org/') || u.startsWith('https://r.jina.ai/') || u.startsWith('https://api.allorigins.win/'))
+            ? await fetch(u)
+            : await fetchFPL(u);
+          lastStatus = resp.status;
+          if (!resp.ok) continue;
+          const text = await resp.text();
+          lastText = text;
+          let parsed = null;
+          try { parsed = JSON.parse(text); } catch (_) { parsed = null; }
+          if (!parsed) {
+            const m = text.match(/\{[\s\S]*\}/);
+            if (m) {
+              try { parsed = JSON.parse(m[0]); } catch (_) { parsed = null; }
+            }
           }
-        }
-        if (parsed && parsed.elements) { data = parsed; used = u; break; }
-        data = null;
-      } catch (e) { /* try next */ }
+          if (parsed && parsed.elements) { data = parsed; used = u; break; }
+        } catch (e) { /* try next */ }
+      }
+      if (!data) return res.status(502).json({ error: 'Upstream error', status: lastStatus || 'all_failed', sample: (lastText||'').slice(0,160) });
+      // Cache for 5 minutes
+      FPL_CACHE = { data, expires: Date.now() + 5 * 60 * 1000, source: used };
     }
-    if (!data) return res.status(502).json({ error: 'Upstream error', status: lastStatus || 'all_failed', sample: (lastText||'').slice(0,160) });
     if (req.query && 'debug' in req.query) {
       res.set('Cache-Control', 'no-store');
-      return res.json({ source: used, status: lastStatus, keys: Object.keys(data||{}), counts: { teams: (data.teams||[]).length, elements: (data.elements||[]).length } });
+      return res.json({ source: used, status: lastStatus || 200, keys: Object.keys(data||{}), counts: { teams: (data.teams||[]).length, elements: (data.elements||[]).length } });
     }
+    // Slight cache for clients too
+    res.set('Cache-Control', 'public, max-age=60');
     const teams = new Map((data.teams || []).map(t => [t.id, t.name]));
     const players = data.elements || [];
 
