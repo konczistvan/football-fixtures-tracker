@@ -14,13 +14,3 @@ services:
         sync: false   # set this securely in the Render dashboard
       - key: NODE_VERSION
         value: 20
-      # Optional: FPL source URL override (rarely needed)
-      - key: FPL_URL
-        value: https://fantasy.premierleague.com/api/bootstrap-static/
-      # Optional: API-Football via RapidAPI
-      - key: RAPID_BASE
-        value: https://api-football-v1.p.rapidapi.com/v3
-      - key: RAPID_HOST
-        value: api-football-v1.p.rapidapi.com
-      - key: RAPID_KEY
-        sync: false   # set your RapidAPI key in the dashboard if you enable this
