@@ -82,5 +82,14 @@
     if (team && team.tla && team.tla.length <= 4) return team.tla;
     return (team && team.name) || '';
   };
-})(window);
 
+  // Basic HTML escape to safely render user-provided text
+  App.escape = function (s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+})(window);

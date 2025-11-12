@@ -182,3 +182,5 @@
   background: rgba(255, 103, 103, 0.2);
   border-color: rgba(255, 103, 103, 0.4);
 }
+/* Events box minimal helpers */
+.events-box h3 { margin: 0; }

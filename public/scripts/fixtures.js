@@ -48,16 +48,20 @@
         } else {
           center = `<span class="chip chip-time">${App.timeOnly(new Date(m.utcDate))}</span>`;
         }
+        const actions = (status === 'FINISHED')
+          ? `<button class="chip" data-action="add-note" data-match-id="${m.id}">Note</button>`
+          : `<button class="chip" data-action="add-event" data-match-id="${m.id}">Remind</button>`;
         return `
       <div class="row">
         <div class="right"><span class="team"><img class="crest" src="${App.crestUrl(m.homeTeam)}" alt="${m.homeTeam?.name || ''}" /> <button class="team-link" data-team-id="${m.homeTeam?.id}">${App.teamLabel(m.homeTeam)}</button></span></div>
-        <div class="center">${center}</div>
+        <div class="center">${center} ${actions}</div>
         <div><span class="team"><img class="crest" src="${App.crestUrl(m.awayTeam)}" alt="${m.awayTeam?.name || ''}" /> <button class="team-link" data-team-id="${m.awayTeam?.id}">${App.teamLabel(m.awayTeam)}</button></span></div>
       </div>
     `;
       })
       .join('');
     App.animateSwap(container, html);
+    if (App.updateNoteBadges) App.updateNoteBadges();
   };
 
   App.setCalendarDate = function (d) {
@@ -92,6 +96,27 @@
         App.setCalendarDate(cur);
       });
     if (today) today.addEventListener('click', () => App.setCalendarDate(new Date()));
+    // Delegated quick-add event handling
+    document.addEventListener('click', (e) => {
+      const btnEvent = e.target.closest('[data-action="add-event"]');
+      if (btnEvent) {
+        const id = Number(btnEvent.getAttribute('data-match-id'));
+        const input = document.querySelector('#fixture-date');
+        const dateStr = input && input.value;
+        if (!dateStr) return;
+        (async () => {
+          try {
+            let data = await App.call(`/matches`, { competitions: App.COMP, dateFrom: dateStr, dateTo: dateStr, status: 'SCHEDULED,TIMED,IN_PLAY,PAUSED,FINISHED,POSTPONED' });
+            let list = data.matches || [];
+            if (!list.length) {
+              data = await App.call(`/competitions/${App.COMP}/matches`, { dateFrom: dateStr, dateTo: dateStr, status: 'SCHEDULED,TIMED,IN_PLAY,PAUSED,FINISHED,POSTPONED' });
+              list = data.matches || [];
+            }
+            const match = list.find((m) => Number(m.id) === id);
+            if (match && App.quickAddEvent) App.quickAddEvent(match);
+          } catch (err) { console.error(err); }
+        })();
+      }
+    });
   };
 })(window);
-

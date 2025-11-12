@@ -51,6 +51,12 @@
 
     <div class="card card--compact">
       <h2>Fixtures Calendar</h2>
+      <div class="controls small" style="justify-content: space-between;">
+        <div style="font-weight:600;">Upcoming Events</div>
+        <button id="add-custom-event" class="tab">Add Custom Event</button>
+      </div>
+      <div id="events-list" class="compact-list"></div>
+      <div id="events-empty" class="muted" hidden>No upcoming events.</div>
       <div class="controls">
         <button id="prev-day" class="icon-btn" title="Previous day" aria-label="Previous day"><svg class="icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
         <input type="date" id="fixture-date" />
@@ -102,10 +108,69 @@
       </div>
     </div>
   </div>
+  <!-- Event modal -->
+  <div id="event-modal" class="modal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div class="head"><h3>Create Event</h3></div>
+        <button id="event-close" class="close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-content">
+        <form id="event-form">
+          <div style="display:grid; grid-template-columns:1fr; gap:10px; width:min(520px, 86vw);">
+            <label>Title
+              <input type="text" name="title" placeholder="e.g., Derby match" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg-elev); color:var(--text);" />
+            </label>
+            <label>Date & Time
+              <input type="datetime-local" name="datetime" required style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg-elev); color:var(--text);" />
+            </label>
+            <label>Remind before (minutes)
+              <input type="number" name="remind" min="0" value="30" style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg-elev); color:var(--text);" />
+            </label>
+            <div style="text-align:right"><button type="submit" class="tab">Save Event</button></div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note modal -->
+  <div id="note-modal" class="modal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div class="head">
+          <div>
+            <h3 id="note-title">Match</h3>
+            <div id="note-when" class="muted"></div>
+          </div>
+        </div>
+        <button id="note-close" class="close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-content">
+        <div class="modal-col">
+          <h4>Add Note</h4>
+          <form id="note-form">
+            <textarea name="text" rows="3" maxlength="500" placeholder="Your note..." style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg-elev); color:var(--text);"></textarea>
+            <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+              <div class="chip" id="captcha-q">1 + 2 = ?</div>
+              <input id="captcha-a" type="number" inputmode="numeric" placeholder="?" style="width:100px; padding:6px 10px; border:1px solid var(--border); border-radius:10px; background:var(--bg-elev); color:var(--text);" />
+              <button type="submit" class="tab">Submit</button>
+            </div>
+          </form>
+        </div>
+        <div class="modal-col">
+          <h4>Notes</h4>
+          <div id="notes-list" class="compact-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <script src="scripts/helpers.js" defer></script>
   <script src="scripts/api.js" defer></script>
   <script src="scripts/standings.js" defer></script>
   <script src="scripts/fixtures.js" defer></script>
+  <script src="scripts/events.js" defer></script>
+  <script src="scripts/notes.js" defer></script>
   <script src="scripts/leaders.js" defer></script>
   <script src="scripts/teamModal.js" defer></script>
   <script src="scripts/seasonProgress.js" defer></script>
