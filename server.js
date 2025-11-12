@@ -35,12 +35,14 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
                       : kind === 'assists' ? 'assists'
                       : 'clean_sheets';
 
-    // Build player mini-face from FPL photo code
-    const faceUrl = (p) => {
+    // Build player mini-face URLs from FPL photo code (large + small fallback)
+    const faceUrls = (p) => {
       const code = String(p.photo || '').split('.')[0];
-      if (!code) return '';
-      // higher-res headshot; falls back via frontend if not available
-      return `https://resources.premierleague.com/premierleague/photos/players/250x250/p${code}.png`;
+      if (!code) return { large: '', small: '' };
+      return {
+        large: `https://resources.premierleague.com/premierleague/photos/players/250x250/p${code}.png`,
+        small: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${code}.png`
+      };
     };
 
     let filtered = players;
@@ -50,12 +52,16 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
     }
 
     const list = filtered
-      .map(p => ({
-        name: p.web_name || `${p.first_name || ''} ${p.second_name || ''}`.trim(),
-        team: teams.get(p.team) || '',
-        value: p[valueField] || 0,
-        face: faceUrl(p)
-      }))
+      .map(p => {
+        const f = faceUrls(p);
+        return {
+          name: p.web_name || `${p.first_name || ''} ${p.second_name || ''}`.trim(),
+          team: teams.get(p.team) || '',
+          value: p[valueField] || 0,
+          face: f.large,
+          faceAlt: f.small
+        };
+      })
       .filter(x => x.value && x.team && x.name)
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);

@@ -16,10 +16,11 @@
       .map((it, i) => {
         const ph = 'anon.svg';
         const src = it.face || ph;
+        const alt = it.faceAlt || '';
         return `
       <div class="item">
         <div class="rank">${i + 1}</div>
-        <img class="face" src="${src}" alt="${it.name || ''}" onerror="this.onerror=null;this.src='${ph}'" />
+        <img class="face" src="${src}" data-alt="${alt}" alt="${it.name || ''}" onerror="if(this.dataset.alt){ this.src=this.dataset.alt; this.dataset.alt=''; } else { this.onerror=null; this.src='${ph}'; }" />
         <div class="who"><div class="name">${it.name} <span class="muted">${it.team ? '&middot; ' + it.team : ''}</span></div></div>
         <div class="stat">${it.value}</div>
       </div>
@@ -31,7 +32,7 @@
   App.loadTopScorers = async function () {
     try {
       const data = await App.call(`/pl-stats/scorers`);
-      const arr = (data.items || []).map((s) => ({ name: s.name, team: s.team, face: s.face || '', value: s.value }));
+      const arr = (data.items || []).map((s) => ({ name: s.name, team: s.team, face: s.face || '', faceAlt: s.faceAlt || '', value: s.value }));
       if (arr.length) return renderLeaders(arr);
     } catch (e) {}
     try {
@@ -86,7 +87,7 @@
     from.setDate(to.getDate() - 60);
     try {
       const f = await App.call(`/pl-stats/cleansheets`);
-      const arr1 = (f.items || []).map((s) => ({ name: s.name, team: s.team, face: s.face || '', value: s.value }));
+      const arr1 = (f.items || []).map((s) => ({ name: s.name, team: s.team, face: s.face || '', faceAlt: s.faceAlt || '', value: s.value }));
       if (arr1.length) return renderLeaders(arr1);
     } catch (e) {}
     try {
@@ -150,4 +151,3 @@
     App.loadTopScorers();
   };
 })(window);
-
