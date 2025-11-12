@@ -51,8 +51,15 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
         if (!resp.ok) continue;
         const text = await resp.text();
         lastText = text;
-        try { data = JSON.parse(text); } catch (_) { data = null; continue; }
-        if (data && data.elements) { used = u; break; }
+        let parsed = null;
+        try { parsed = JSON.parse(text); } catch (_) { parsed = null; }
+        if (!parsed) {
+          const m = text.match(/\{[\s\S]*\}/);
+          if (m) {
+            try { parsed = JSON.parse(m[0]); } catch (_) { parsed = null; }
+          }
+        }
+        if (parsed && parsed.elements) { data = parsed; used = u; break; }
         data = null;
       } catch (e) { /* try next */ }
     }
