@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: football-fixtures-tracker
+    env: node
+    plan: free
+    autoDeploy: true
+    buildCommand: npm ci || npm install
+    startCommand: node server.js
+    # Optionally pin region/branch. Uncomment and adjust as needed.
+    # region: oregon
+    # branch: main
+    envVars:
+      - key: FD_TOKEN
+        sync: false   # set this securely in the Render dashboard
+      - key: NODE_VERSION
+        value: 20
