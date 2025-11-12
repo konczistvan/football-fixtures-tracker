@@ -12,13 +12,20 @@ app.use(express.static("public"));
 const UPSTREAM = "https://api.football-data.org/v4";
 // --- Premier League stats via Fantasy Premier League API (for accurate leaders)
 // Provides: /api/pl-stats/:kind where kind in {scorers, assists, cleansheets}
+// Use a browser-like UA to avoid upstream 403 on some hosts
+const FPL_URL = process.env.FPL_URL || 'https://fantasy.premierleague.com/api/bootstrap-static/';
 app.get('/api/pl-stats/:kind', async (req, res) => {
   try {
     const kind = String(req.params.kind || '').toLowerCase();
     if (!['scorers','assists','cleansheets'].includes(kind)) {
       return res.status(400).json({ error: 'Invalid kind' });
     }
-    const r = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/');
+    const r = await fetch(FPL_URL, {
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+      },
+    });
     if (!r.ok) return res.status(502).json({ error: 'Upstream error', status: r.status });
     const data = await r.json();
     const teams = new Map((data.teams || []).map(t => [t.id, t.name]));
@@ -28,12 +35,14 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
                       : kind === 'assists' ? 'assists'
                       : 'clean_sheets';
 
-    // Build player mini-face from FPL photo code
-    const faceUrl = (p) => {
+    // Build player mini-face via local proxy to avoid hotlink restrictions
+    const faceUrls = (p) => {
       const code = String(p.photo || '').split('.')[0];
-      if (!code) return '';
-      // higher-res headshot; falls back via frontend if not available
-      return `https://resources.premierleague.com/premierleague/photos/players/250x250/p${code}.png`;
+      if (!code) return { large: '', small: '' };
+      return {
+        large: `/img/fpl/p${code}.png?size=250`,
+        small: `/img/fpl/p${code}.png?size=110`,
+      };
     };
 
     let filtered = players;
@@ -43,12 +52,16 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
     }
 
     const list = filtered
-      .map(p => ({
-        name: p.web_name || `${p.first_name || ''} ${p.second_name || ''}`.trim(),
-        team: teams.get(p.team) || '',
-        value: p[valueField] || 0,
-        face: faceUrl(p)
-      }))
+      .map(p => {
+        const f = faceUrls(p);
+        return {
+          name: p.web_name || `${p.first_name || ''} ${p.second_name || ''}`.trim(),
+          team: teams.get(p.team) || '',
+          value: p[valueField] || 0,
+          face: f.large,
+          faceAlt: f.small,
+        };
+      })
       .filter(x => x.value && x.team && x.name)
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
@@ -57,6 +70,30 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
   } catch (e) {
     console.error('pl-stats error', e);
     res.status(500).json({ error: 'pl-stats failed', detail: String(e) });
+  }
+});
+
+// Local proxy for FPL headshots to ensure images load on all hosts
+app.get('/img/fpl/:file', async (req, res) => {
+  try {
+    const file = String(req.params.file || '');
+    const size = String(req.query.size || '250') === '110' ? '110x140' : '250x250';
+    if (!/^p\d+\.png$/.test(file)) return res.status(400).send('Bad image');
+    const url = `https://resources.premierleague.com/premierleague/photos/players/${size}/${file}`;
+    const r = await fetch(url, {
+      headers: {
+        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+      },
+    });
+    if (!r.ok) return res.status(r.status).send('Image upstream error');
+    res.set('Content-Type', r.headers.get('content-type') || 'image/png');
+    res.set('Cache-Control', 'public, max-age=86400');
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.send(buf);
+  } catch (e) {
+    console.error('image proxy error', e);
+    res.status(500).send('Image proxy error');
   }
 });
 
