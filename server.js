@@ -12,13 +12,20 @@ app.use(express.static("public"));
 const UPSTREAM = "https://api.football-data.org/v4";
 // --- Premier League stats via Fantasy Premier League API (for accurate leaders)
 // Provides: /api/pl-stats/:kind where kind in {scorers, assists, cleansheets}
+// Note: some hosts (e.g., Cloudflare) may be picky about headers; send a browser-ish UA.
+const FPL_URL = process.env.FPL_URL || 'https://fantasy.premierleague.com/api/bootstrap-static/';
 app.get('/api/pl-stats/:kind', async (req, res) => {
   try {
     const kind = String(req.params.kind || '').toLowerCase();
     if (!['scorers','assists','cleansheets'].includes(kind)) {
       return res.status(400).json({ error: 'Invalid kind' });
     }
-    const r = await fetch('https://fantasy.premierleague.com/api/bootstrap-static/');
+    const r = await fetch(FPL_URL, {
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+      },
+    });
     if (!r.ok) return res.status(502).json({ error: 'Upstream error', status: r.status });
     const data = await r.json();
     const teams = new Map((data.teams || []).map(t => [t.id, t.name]));
@@ -59,6 +66,36 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
     res.status(500).json({ error: 'pl-stats failed', detail: String(e) });
   }
 });
+
+// --- Optional: API-Football (RapidAPI) passthrough (if you want to use other endpoints)
+// Configure on Render or .env:
+// RAPID_BASE=https://api-football-v1.p.rapidapi.com/v3
+// RAPID_KEY=your-rapidapi-key
+// RAPID_HOST=api-football-v1.p.rapidapi.com
+const RAPID_BASE = process.env.RAPID_BASE || '';
+const RAPID_KEY = (process.env.RAPID_KEY || '').trim();
+const RAPID_HOST = process.env.RAPID_HOST || '';
+if (RAPID_BASE && RAPID_KEY) {
+  app.get(/^\/api-rapid\/(.*)$/, async (req, res) => {
+    try {
+      const subpath = '/' + (req.params[0] || '');
+      const qs = new URLSearchParams(req.query).toString();
+      const url = `${RAPID_BASE}${subpath}${qs ? '?' + qs : ''}`;
+      const r = await fetch(url, {
+        headers: {
+          'X-RapidAPI-Key': RAPID_KEY,
+          ...(RAPID_HOST ? { 'X-RapidAPI-Host': RAPID_HOST } : {}),
+          'Accept': 'application/json',
+        },
+      });
+      const body = await r.text();
+      res.status(r.status).set('Content-Type', r.headers.get('content-type') || 'application/json').send(body);
+    } catch (e) {
+      console.error('Rapid proxy error', e);
+      res.status(500).json({ error: 'Rapid proxy error', detail: String(e) });
+    }
+  });
+}
 
 // --- Token beolvasása és debug ---
 const token = (process.env.FD_TOKEN || "").trim();
