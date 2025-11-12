@@ -1,0 +1,112 @@
+/* Team modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+}
+.modal.show {
+  display: flex;
+}
+.modal .dialog {
+  width: min(1000px, 96vw);
+  max-height: 90vh;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.02)
+  );
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header .head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modal .crest-lg {
+  width: 32px;
+  height: 32px;
+}
+.modal .close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.modal-content {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 16px;
+  padding: 14px;
+}
+@media (max-width: 820px) {
+  .modal-content {
+    grid-template-columns: 1fr;
+  }
+}
+.squad-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  max-height: 70vh;
+  overflow: auto;
+}
+.squad-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.squad-item .pos {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.squad-group {
+  grid-column: 1/-1;
+}
+.group-title {
+  margin: 6px 0 6px;
+  font-weight: 700;
+  color: #c8d2df;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+/* Clickable team link */
+.team-link {
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.team-link:hover {
+  text-decoration: underline;
+}
+
+.chip-date {
+  background: rgba(255, 255, 255, 0.06);
+  color: #cfd7e3;
+  margin-right: 6px;
+}
