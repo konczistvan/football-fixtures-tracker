@@ -20,13 +20,24 @@ app.get('/api/pl-stats/:kind', async (req, res) => {
     if (!['scorers','assists','cleansheets'].includes(kind)) {
       return res.status(400).json({ error: 'Invalid kind' });
     }
-    const r = await fetch(FPL_URL, {
-      headers: {
-        'Accept': 'application/json, text/plain, */*',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
-      },
-    });
-    if (!r.ok) return res.status(502).json({ error: 'Upstream error', status: r.status });
+    async function fetchFPL(url) {
+      return fetch(url, {
+        headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+          'Referer': 'https://fantasy.premierleague.com/',
+          'Origin': 'https://fantasy.premierleague.com',
+          'Accept-Language': 'en-GB,en;q=0.9'
+        },
+      });
+    }
+    let r = await fetchFPL(FPL_URL);
+    if (r.status === 403) {
+      // fallback via simple proxy if upstream blocks our host
+      const alt = `https://cors.isomorphic-git.org/${FPL_URL}`;
+      try { r = await fetch(alt); } catch (_) {}
+    }
+    if (!r || !r.ok) return res.status(502).json({ error: 'Upstream error', status: r && r.status });
     const data = await r.json();
     const teams = new Map((data.teams || []).map(t => [t.id, t.name]));
     const players = data.elements || [];
